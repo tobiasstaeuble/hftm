@@ -12,6 +12,9 @@ using System.Security.Cryptography.X509Certificates;
 using Azure.Security.KeyVault.Certificates;
 using Azure.Messaging.EventGrid.SystemEvents;
 using Newtonsoft.Json.Linq;
+using System.Threading.Tasks;
+using System;
+using System.IO;
 
 namespace HFTM.PictureProcessor
 {
@@ -20,7 +23,7 @@ namespace HFTM.PictureProcessor
         static ILogger logger = null;
 
         [FunctionName(nameof(PicturesProcessor))]
-        public static async Task Run([Microsoft.Azure.Functions.Worker.EventGridTrigger] EventGridEvent eventGridEvent, [Blob("{data.url}", FileAccess.Read, Connection = "storageAccount_STORAGE")] Stream input, ILogger log)
+        public static async Task Run([EventGridTrigger] EventGridEvent eventGridEvent, [Blob("{data.url}", FileAccess.Read, Connection = "storageAccount_STORAGE")] Stream input, ILogger log)
         {
             logger = log;
 
