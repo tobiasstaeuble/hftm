@@ -24,6 +24,10 @@ using Emgu.CV.Structure;
 using Emgu.CV.CvEnum;
 using Emgu.Util;
 using Emgu.CV.UI;
+using Emgu.CV.Dnn;
+using Emgu.CV.Util;
+using SixLabors.ImageSharp.Processing;
+using Microsoft.Extensions.FileSystemGlobbing;
 
 namespace HFTM.PictureProcessor
 {
@@ -76,16 +80,68 @@ namespace HFTM.PictureProcessor
             var cvImg = bitmap.ToImage<Bgr, byte>();
             Image<Gray, byte> grayframe = cvImg.Convert<Gray, byte>();
 
+
             string exePath = System.Reflection.Assembly.GetExecutingAssembly().Location;
             string exeDir = System.IO.Path.GetDirectoryName(exePath);
             DirectoryInfo binDir = System.IO.Directory.GetParent(exeDir);
             string haarCascadePath = binDir.FullName + "\\haarcascade_frontalface_default.xml";
+
             CascadeClassifier _cascadeClassifier = new CascadeClassifier(haarCascadePath);
 
+            string yunetPath = binDir.FullName + "\\face_detection_yunet_2023mar.onnx";
+            var yunetDetector = DnnInvoke.ReadNetFromONNX(yunetPath);
             var rectangles = _cascadeClassifier.DetectMultiScale(grayframe, 1.1, 10, new Size(20, 20));
 
-            logger.LogInformation($"Detected {rectangles.Length} faces.");
-            logger.LogInformation($"First face rectangle coordinates: {rectangles[0].X}/{rectangles[0].Y} Size: {rectangles[0].Width}/{rectangles[0].Height}");
+            yunetDetector.SetInput(cvImg);
+            VectorOfMat outBlobs = new VectorOfMat(1);
+            yunetDetector.Forward(outBlobs);
+            var outputBlob = outBlobs[0].ToBitmap();
+
+            var outputFacePngYunet = new MemoryStream();
+
+            if (rectangles.Length == 1)
+            {
+                logger.LogInformation($"Detected face.");
+                logger.LogInformation($"Face rectangle coordinates: {rectangles[0].X}/{rectangles[0].Y} Size: {rectangles[0].Width}/{rectangles[0].Height}");
+
+                // crop photo using magick.net
+                var face = image.Clone(x => x.Crop(new SixLabors.ImageSharp.Rectangle(rectangles[0].X, rectangles[0].Y, rectangles[0].Width, rectangles[0].Height)));
+                Stream outputFacePng = new MemoryStream();
+                try
+                {
+                    var encoder = new PngEncoder();
+                    face.Save(outputFacePng, encoder);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError("Failed to convert face image to png.");
+                    logger.LogError(ex.Message);
+                }
+
+                await CopyPhotoToResultStorage(outputFacePng, eventGridEvent, blobServiceClient, "-adaboostffa");
+
+                try
+                {
+                    outputBlob.Save(outputFacePngYunet, System.Drawing.Imaging.ImageFormat.Png);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError("Failed to convert face image to png.");
+                    logger.LogError(ex.Message);
+                }
+                await CopyPhotoToResultStorage(outputFacePngYunet, eventGridEvent, blobServiceClient, "-yunet");
+
+                logger.LogInformation($"Saved face version.");
+
+            }
+            else if (rectangles.Length == 0)
+            {
+                logger.LogWarning("No faces detected.");
+            }
+            else
+            {
+                logger.LogWarning("Detected multiple faces, aborting.");
+            }
 
 
         }
@@ -112,6 +168,12 @@ namespace HFTM.PictureProcessor
             return url.Split("/")[url.Split("/").Length - 1];
         }
 
+        private static string GetUploadedDocumentFileNameWithoutExtension(EventGridEvent eventGridEvent)
+        {
+            var fileName = GetUploadedDocumentFileName(eventGridEvent);
+            return fileName.Substring(0, fileName.LastIndexOf('.'));
+        }
+
         private static X509Certificate2 FetchKeyVaultCertificate(DefaultAzureCredential creds)
         {
             var keyVaultCertificateClient = new CertificateClient(vaultUri: new Uri(Environment.GetEnvironmentVariable("KeyVaultUrl")), credential: creds);
@@ -133,5 +195,42 @@ namespace HFTM.PictureProcessor
             var binaryData = await blobClient.OpenReadAsync();
             return binaryData;
         }
+        private static async Task CopyPhotoToResultStorage(Stream photo, EventGridEvent eventGridEvent, BlobServiceClient blobServiceClient, string suffix = "", string formatExtension = "png")
+        {
+            var resultContainerClient = GetBlobContainerClient(blobServiceClient, Environment.GetEnvironmentVariable("mainContainerName"));
+            var name = $"Processed-{DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss")}-{GetUploadedDocumentFileNameWithoutExtension(eventGridEvent)}{suffix}.{formatExtension}";
+            await SavePhotoToStorage(name, resultContainerClient, photo);
+        }
+
+        private static async Task SavePhotoToStorage(string name, BlobContainerClient blobContainerClient, Stream photo)
+        {
+            photo.Position = 0;
+            if (await DoesBlobExist(name, blobContainerClient))
+            {
+                var blobClient = blobContainerClient.GetBlobClient(name);
+                await blobClient.UploadAsync(photo, true); // overwrite
+            }
+            else
+            {
+                await blobContainerClient.UploadBlobAsync(name, photo);
+            }
+        }
+
+        private static async Task<bool> DoesBlobExist(string name, BlobContainerClient blobContainerClient)
+        {
+            var exists = false;
+            try
+            {
+                var blobClient = blobContainerClient.GetBlobClient(name);
+                exists = await blobClient.ExistsAsync();
+            }
+            catch
+            {
+                exists = false;
+            }
+            return exists;
+        }
+
+
     }
 }
