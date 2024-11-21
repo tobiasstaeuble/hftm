@@ -75,7 +75,12 @@ namespace HFTM.PictureProcessor
             Bitmap bitmap = new Bitmap(outputStreamPng);
             var cvImg = bitmap.ToImage<Bgr, byte>();
             Image<Gray, byte> grayframe = cvImg.Convert<Gray, byte>();
-            CascadeClassifier _cascadeClassifier = new CascadeClassifier("haarcascade_frontalface_default.xml");
+
+            string exePath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+            string exeDir = System.IO.Path.GetDirectoryName(exePath);
+            DirectoryInfo binDir = System.IO.Directory.GetParent(exeDir);
+            string haarCascadePath = binDir.FullName + "\\haarcascade_frontalface_default.xml";
+            CascadeClassifier _cascadeClassifier = new CascadeClassifier(haarCascadePath);
 
             var rectangles = _cascadeClassifier.DetectMultiScale(grayframe, 1.1, 10, new Size(20, 20));
 
