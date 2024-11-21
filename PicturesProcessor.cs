@@ -88,17 +88,19 @@ namespace HFTM.PictureProcessor
 
             CascadeClassifier _cascadeClassifier = new CascadeClassifier(haarCascadePath);
 
-            string yunetPath = binDir.FullName + "\\face_detection_yunet_2023mar.onnx";
-            var yunetDetector = DnnInvoke.ReadNetFromONNX(yunetPath);
+            
             var rectangles = _cascadeClassifier.DetectMultiScale(grayframe, 1.1, 10, new Size(20, 20));
 
+            /*
+            string yunetPath = binDir.FullName + "\\face_detection_yunet_2023mar.onnx";
+            var yunetDetector = DnnInvoke.ReadNetFromONNX(yunetPath);
             yunetDetector.SetInput(cvImg);
             VectorOfMat outBlobs = new VectorOfMat(1);
             yunetDetector.Forward(outBlobs);
             var outputBlob = outBlobs[0].ToBitmap();
 
             var outputFacePngYunet = new MemoryStream();
-
+            */
             if (rectangles.Length == 1)
             {
                 logger.LogInformation($"Detected face.");
@@ -119,7 +121,7 @@ namespace HFTM.PictureProcessor
                 }
 
                 await CopyPhotoToResultStorage(outputFacePng, eventGridEvent, blobServiceClient, "-adaboostffa");
-
+                /*
                 try
                 {
                     outputBlob.Save(outputFacePngYunet, System.Drawing.Imaging.ImageFormat.Png);
@@ -130,7 +132,7 @@ namespace HFTM.PictureProcessor
                     logger.LogError(ex.Message);
                 }
                 await CopyPhotoToResultStorage(outputFacePngYunet, eventGridEvent, blobServiceClient, "-yunet");
-
+                */
                 logger.LogInformation($"Saved face version.");
 
             }
