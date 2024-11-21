@@ -6,9 +6,13 @@
     <RootNamespace>HFTM.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <None Remove="face_detection_yunet_2023mar.onnx" />
     <None Remove="haarcascade_frontalface_default.xml" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="face_detection_yunet_2023mar.onnx">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="haarcascade_frontalface_default.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
