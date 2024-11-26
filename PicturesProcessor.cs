@@ -87,7 +87,6 @@ namespace HFTM.PictureProcessor
             string haarCascadePath = binDir.FullName + "\\haarcascade_frontalface_default.xml";
 
             CascadeClassifier _cascadeClassifier = new CascadeClassifier(haarCascadePath);
-
             
             var rectangles = _cascadeClassifier.DetectMultiScale(grayframe, 1.1, 10, new Size(20, 20));
 
@@ -106,8 +105,38 @@ namespace HFTM.PictureProcessor
                 logger.LogInformation($"Detected face.");
                 logger.LogInformation($"Face rectangle coordinates: {rectangles[0].X}/{rectangles[0].Y} Size: {rectangles[0].Width}/{rectangles[0].Height}");
 
+                // calculate cropping values
+                var originalWidth = rectangles[0].Width;
+                var originalHeight = rectangles[0].Height;
+                var originalY = rectangles[0].Y;
+                var originalX = rectangles[0].X;
+
+                // + 50% to each side
+                var newWidth = originalWidth + (originalWidth / 2);
+                var newHeight = originalHeight + (originalHeight / 2);
+
+                // correct x and y for increased width and height
+                var totalIncreaseInWidth = newWidth - originalWidth;
+                var totalIncreaseInHeight = newHeight - originalHeight;
+
+                var newX = originalX - (totalIncreaseInWidth / 2);
+                var newY = originalY - (totalIncreaseInHeight / 2);
+
+                // we cannot go bigger than the original picture and X/Y cannot be negative
+                if (newX < 0)
+                    newX = 0;
+                if (newY < 0)
+                    newY = 0;
+                if (newX + newWidth > image.Width)
+                    newWidth = originalWidth;
+                if (newY + newHeight > image.Height)
+                    newHeight = originalHeight;
+
+
+
+
                 // crop photo using magick.net
-                var face = image.Clone(x => x.Crop(new SixLabors.ImageSharp.Rectangle(rectangles[0].X, rectangles[0].Y, rectangles[0].Width, rectangles[0].Height)));
+                var face = image.Clone(x => x.Crop(new SixLabors.ImageSharp.Rectangle(newX, newY, newWidth, newHeight)));
                 Stream outputFacePng = new MemoryStream();
                 try
                 {
