@@ -159,8 +159,7 @@ namespace HFTM.PictureProcessor
 
                 // make that background transparent
                 magickImage.ColorFuzz = new Percentage(10);
-
-                magickImage.FloodFill(0, 0, 0);
+                magickImage.FloodFill(new MagickColor(0, 0, 0, 0), 1, 1);
 
                 //magickImage.Transparent(color);
 
