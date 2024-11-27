@@ -28,6 +28,7 @@ using Emgu.CV.Dnn;
 using Emgu.CV.Util;
 using SixLabors.ImageSharp.Processing;
 using Microsoft.Extensions.FileSystemGlobbing;
+using ImageMagick;
 
 namespace HFTM.PictureProcessor
 {
@@ -60,7 +61,7 @@ namespace HFTM.PictureProcessor
             // fetch new photo from storage
             var newPhoto = await GetUploadedPhotoFromStorageAsStream(eventGridEvent, blobServiceClient);
 
-            // load into magick.net
+            // load into imagesharp
             var image = SixLabors.ImageSharp.Image.Load(newPhoto);
 
             // convert to png
@@ -111,16 +112,17 @@ namespace HFTM.PictureProcessor
                 var originalY = rectangles[0].Y;
                 var originalX = rectangles[0].X;
 
-                // + 50% to each side
-                var newWidth = originalWidth + (originalWidth / 2);
-                var newHeight = originalHeight + (originalHeight / 2);
+                // + 70% to each height and width
+                var newWidth = originalWidth + (originalWidth * 0.7);
+                var newHeight = originalHeight + (originalHeight * 0.7);
 
                 // correct x and y for increased width and height
                 var totalIncreaseInWidth = newWidth - originalWidth;
                 var totalIncreaseInHeight = newHeight - originalHeight;
 
-                var newX = originalX - (totalIncreaseInWidth / 2);
-                var newY = originalY - (totalIncreaseInHeight / 2);
+                // we want it to be centered, but a little bit adjusted so we have more picture at the top
+                var newX = originalX - (totalIncreaseInWidth * 0.5);
+                var newY = originalY - (totalIncreaseInHeight * 0.6);
 
                 // we cannot go bigger than the original picture and X/Y cannot be negative
                 if (newX < 0)
@@ -132,11 +134,10 @@ namespace HFTM.PictureProcessor
                 if (newY + newHeight > image.Height)
                     newHeight = originalHeight;
 
+                // crop photo using imagesharp
+                var face = image.Clone(x => x.Crop(new SixLabors.ImageSharp.Rectangle((int)newX, (int)newY, (int)newWidth, (int)newHeight)));
 
-
-
-                // crop photo using magick.net
-                var face = image.Clone(x => x.Crop(new SixLabors.ImageSharp.Rectangle(newX, newY, newWidth, newHeight)));
+                // save image to memory stream
                 Stream outputFacePng = new MemoryStream();
                 try
                 {
@@ -149,7 +150,23 @@ namespace HFTM.PictureProcessor
                     logger.LogError(ex.Message);
                 }
 
-                await CopyPhotoToResultStorage(outputFacePng, eventGridEvent, blobServiceClient, "-adaboostffa");
+                // load into magick.net
+                MagickImage magickImage = new MagickImage(outputFacePng);
+
+                // detect topleft most pixel color (assuming its the background)
+                var color = magickImage.GetPixels()[0, 0].ToColor();
+
+                // make that background transparent
+                magickImage.ColorFuzz = new Percentage(10);
+
+                magickImage.Transparent(color);
+
+                // save image to memory stream
+                Stream outputFacePngTransparent = new MemoryStream();
+                magickImage.Write(outputFacePngTransparent, MagickFormat.Png);
+
+
+                await CopyPhotoToResultStorage(outputFacePngTransparent, eventGridEvent, blobServiceClient, "-adaboostffa");
                 /*
                 try
                 {

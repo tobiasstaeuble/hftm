@@ -30,6 +30,7 @@
     <PackageReference Include="Emgu.CV.Bitmap" Version="4.9.0.5494" />
     <PackageReference Include="Emgu.CV.runtime.windows" Version="4.9.0.5494" />
     <PackageReference Include="Emgu.CV.UI" Version="4.9.0.5494" />
+    <PackageReference Include="Magick.NET-Q16-AnyCPU" Version="14.2.0" />
     <PackageReference Include="Magick.NET.Core" Version="14.2.0" />
     <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.EventGrid" Version="3.4.3" />
     <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Storage" Version="5.3.2" />
