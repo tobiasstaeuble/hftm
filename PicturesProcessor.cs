@@ -160,7 +160,9 @@ namespace HFTM.PictureProcessor
                 // make that background transparent
                 magickImage.ColorFuzz = new Percentage(10);
 
-                magickImage.Transparent(color);
+                magickImage.FloodFill(0, 0, 0);
+
+                //magickImage.Transparent(color);
 
                 // save image to memory stream
                 Stream outputFacePngTransparent = new MemoryStream();
