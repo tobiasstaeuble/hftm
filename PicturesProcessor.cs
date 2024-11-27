@@ -151,6 +151,7 @@ namespace HFTM.PictureProcessor
                 }
 
                 // load into magick.net
+                outputFacePng.Position = 0;
                 MagickImage magickImage = new MagickImage(outputFacePng);
 
                 // detect topleft most pixel color (assuming its the background)
