@@ -164,7 +164,13 @@ namespace HFTM.PictureProcessor
                 magickImage.FloodFill(new MagickColor(0, 0, 0, 0), (int)magickImage.Width - 1, (int)magickImage.Height - 1); // start transparent flood fill from bottom right
 
                 // draw a new image with the "moments of red" beam
-                var momentsOfRed = new MagickImage(new MagickColor(0,0,0,0), magickImage.Width, magickImage.Height);
+
+                // transparent version:
+                //var momentsOfRed = new MagickImage(new MagickColor(0,0,0,0), magickImage.Width, magickImage.Height);
+
+                // white background version:
+                var momentsOfRed = new MagickImage(new MagickColor("#FFFFFF"), magickImage.Width, magickImage.Height);
+
 
                 // create polygon in pointd
                 PointD[] points = new PointD[3];
