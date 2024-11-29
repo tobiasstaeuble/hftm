@@ -29,6 +29,7 @@ using Emgu.CV.Util;
 using SixLabors.ImageSharp.Processing;
 using Microsoft.Extensions.FileSystemGlobbing;
 using ImageMagick;
+using ImageMagick.Drawing;
 
 namespace HFTM.PictureProcessor
 {
@@ -163,9 +164,23 @@ namespace HFTM.PictureProcessor
                 magickImage.FloodFill(new MagickColor(0, 0, 0, 0), (int)magickImage.Width - 1, (int)magickImage.Height - 1); // start transparent flood fill from bottom right
 
                 // draw a new image with the "moments of red" beam
+                var momentsOfRed = new MagickImage(new MagickColor(0,0,0,0), magickImage.Width, magickImage.Height);
+
+                // create polygon in pointd
+                PointD[] points = new PointD[3];
+                points[0] = new PointD((int)magickImage.Width - 1, (int)magickImage.Height * 0.19);
+                points[1] = new PointD((int)magickImage.Width * 0.4, (int)magickImage.Height - 1);
+                points[3] = new PointD((int)magickImage.Width - 1, (int)magickImage.Height - 1);
+
+                new Drawables()
+                    .StrokeColor(new MagickColor("#E81A3B"))
+                    .FillColor(new MagickColor("#E81A3B"))
+                    .Polygon(points)
+                    .Draw(momentsOfRed);
 
                 // combine the two images into one
-                // magickImage.Composite()
+                magickImage.Composite(momentsOfRed);
+
                 // save image to memory stream
                 Stream outputFacePngTransparent = new MemoryStream();
                 magickImage.Write(outputFacePngTransparent, MagickFormat.Png);
