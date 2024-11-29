@@ -171,7 +171,6 @@ namespace HFTM.PictureProcessor
                 // white background version:
                 var momentsOfRed = new MagickImage(new MagickColor("#FFFFFF"), magickImage.Width, magickImage.Height);
 
-
                 // create polygon in pointd
                 PointD[] points = new PointD[3];
                 points[0] = new PointD((int)magickImage.Width - 1, (int)magickImage.Height * 0.19);
