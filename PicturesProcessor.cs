@@ -158,11 +158,14 @@ namespace HFTM.PictureProcessor
                 var color = magickImage.GetPixels()[0, 0].ToColor();
 
                 // make that background transparent
-                magickImage.ColorFuzz = new Percentage(10);
-                magickImage.FloodFill(new MagickColor(0, 0, 0, 0), 1, 1);
+                magickImage.ColorFuzz = new Percentage(15);
+                magickImage.FloodFill(new MagickColor(0, 0, 0, 0), 1, 1); // start transparent flood fill from top left
+                magickImage.FloodFill(new MagickColor(0, 0, 0, 0), (int)magickImage.Width - 1, (int)magickImage.Height - 1); // start transparent flood fill from bottom right
 
-                //magickImage.Transparent(color);
+                // draw a new image with the "moments of red" beam
 
+                // combine the two images into one
+                // magickImage.Composite()
                 // save image to memory stream
                 Stream outputFacePngTransparent = new MemoryStream();
                 magickImage.Write(outputFacePngTransparent, MagickFormat.Png);
