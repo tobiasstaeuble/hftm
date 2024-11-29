@@ -179,7 +179,7 @@ namespace HFTM.PictureProcessor
                     .Draw(momentsOfRed);
 
                 // combine the two images into one
-                momentsOfRed.Composite(magickImage, CompositeOperator.Atop, Channels.RGB);
+                momentsOfRed.Composite(magickImage, CompositeOperator.Atop, Channels.Alpha);
 
                 // save image to memory stream
                 Stream outputFacePngTransparent = new MemoryStream();
