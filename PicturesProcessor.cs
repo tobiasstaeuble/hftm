@@ -179,11 +179,11 @@ namespace HFTM.PictureProcessor
                     .Draw(momentsOfRed);
 
                 // combine the two images into one
-                momentsOfRed.Composite(magickImage, CompositeOperator.Atop, Channels.RGB);
+                momentsOfRed.Composite(magickImage, CompositeOperator.Atop, Channels.RGBA);
 
                 // save image to memory stream
                 Stream outputFacePngTransparent = new MemoryStream();
-                magickImage.Write(outputFacePngTransparent, MagickFormat.Png);
+                momentsOfRed.Write(outputFacePngTransparent, MagickFormat.Png);
 
 
                 await CopyPhotoToResultStorage(outputFacePngTransparent, eventGridEvent, blobServiceClient, "-adaboostffa");
