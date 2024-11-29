@@ -170,7 +170,7 @@ namespace HFTM.PictureProcessor
                 PointD[] points = new PointD[3];
                 points[0] = new PointD((int)magickImage.Width - 1, (int)magickImage.Height * 0.19);
                 points[1] = new PointD((int)magickImage.Width * 0.4, (int)magickImage.Height - 1);
-                points[3] = new PointD((int)magickImage.Width - 1, (int)magickImage.Height - 1);
+                points[2] = new PointD((int)magickImage.Width - 1, (int)magickImage.Height - 1);
 
                 new Drawables()
                     .StrokeColor(new MagickColor("#E81A3B"))
